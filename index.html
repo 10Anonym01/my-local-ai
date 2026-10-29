@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
 <meta name="description" content="Your private AI assistant running on your device. No account, paid API, or daily chat quota.">
-<title>My Local AI</title>
+<title>My Local AI · v0.4</title>
 <style>
   :root{color-scheme:dark;--bg:#090e1a;--panel:#121b2c;--panel2:#17243a;--border:#30405b;--text:#edf4ff;--muted:#9fb1cc;--accent:#9eb9ff;--mint:#79dfc0;--danger:#f6a4a4}
   *{box-sizing:border-box}html,body{margin:0;height:100%;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
@@ -24,7 +24,7 @@
 <div class="app">
   <header>
     <div class="symbol" aria-hidden="true">✦</div>
-    <div><h1 id="brand">My Local AI</h1><div class="sub">Your device · Your instructions · No daily chat quota</div></div>
+    <div><h1 id="brand">My Local AI</h1><div class="sub">Your device · Your instructions · No daily chat quota · v0.4</div></div>
     <div class="state"><span class="statusDot" id="dot"></span><span id="modelState">Not loaded</span></div>
   </header>
   <div class="toolbar">
@@ -41,54 +41,87 @@
     <h2>Customize your assistant</h2>
     <div class="settingsGrid">
       <div class="field"><label for="aiName">Assistant name</label><input id="aiName" type="text" maxlength="50" placeholder="My Local AI"></div>
-      <div class="field"><label for="model">Local language model</label><select id="model"><option value="Llama-3.2-1B-Instruct-q4f32_1-MLC">1B · Faster / more compatible</option><option value="Llama-3.2-3B-Instruct-q4f32_1-MLC">3B · Smarter / uses more memory</option></select></div>
-      <div class="field full"><label for="rules">Your instructions</label><textarea id="rules" spellcheck="true"></textarea><small>These guide a pretrained model. They are not neural-network training.</small></div>
+      <div class="field"><label for="model">Local language model</label><select id="model"><option value="Hermes-3-Llama-3.2-3B-q4f32_1-MLC">Hermes 3 · 3B · User-steerable (recommended)</option><option value="Qwen2.5-Coder-1.5B-Instruct-q4f32_1-MLC">Qwen Coder · 1.5B · Coding-focused</option><option value="Llama-3.2-1B-Instruct-q4f32_1-MLC">Llama 3.2 · 1B · Lower-memory fallback</option></select></div>
+      <div class="field full"><label for="rules">Your instructions</label><textarea id="rules" spellcheck="true"></textarea><small>You control these app instructions. Pretrained models may still have learned refusal behavior; no model can be guaranteed to answer every request.</small></div>
       <div class="field full"><label for="memory">Your saved notes (included with each question)</label><textarea id="memory" spellcheck="true" placeholder="Optional facts, preferences, project details…"></textarea></div>
       <div class="field"><label for="temperature">Creativity: <span id="tempValue">0.7</span></label><input type="range" id="temperature" min="0" max="1.4" step="0.1" value="0.7" style="width:100%"></div>
-      <div class="field"><label for="maxTokens">Maximum response length</label><select id="maxTokens"><option value="256">Short · 256 tokens</option><option value="512">Medium · 512 tokens</option><option value="1024" selected>Long · 1,024 tokens</option><option value="1536">Very long · 1,536 tokens</option></select></div>
+      <div class="field"><label for="maxTokens">Maximum response length</label><select id="maxTokens"><option value="256">Short · 256 tokens</option><option value="512">Medium · 512 tokens</option><option value="768" selected>Standard · 768 tokens</option><option value="1024">Long · 1,024 tokens</option><option value="1536">Very long · 1,536 tokens</option></select></div>
     </div>
-    <div class="settingsActions"><button id="saveSettings" class="primary">Save settings</button><small>Changing the model requires reloading the page. Other changes apply to the next question.</small></div>
+    <div class="settingsActions"><button id="saveSettings" class="primary">Save settings</button><small>Changing the model requires reloading the page. Other changes apply to the next question.</small></div><p class="hint">About: This is your own browser app, using downloadable pretrained neural networks. Hermes 3 3B is by Nous Research, fine-tuned from Meta Llama 3.2 3B. Model inference is local. The GitHub Pages source and library downloads still use the internet.</p>
   </section>
   <main class="chat" id="chat" aria-live="polite">
-    <div id="welcome" class="welcome"><div class="star">✦</div><h2>Build your own AI.</h2><p>Tap <b>Load local model</b>, then ask questions, request code, or explain an idea.</p><p>Your answers are generated on your iPad once the model has loaded.</p><div class="examples"><button class="example" data-sample="Explain how neural networks work in simple terms.">Explain neural networks</button><button class="example" data-sample="Write a Python tic-tac-toe game with comments.">Write Python code</button><button class="example" data-sample="Explain Arduino vs Raspberry Pi for beginners.">Explain robotics</button></div></div>
+    <div id="welcome" class="welcome"><div class="star">✦</div><h2>Your AI, your instructions.</h2><p>Tap <b>Load local model</b>, then ask questions, request code, or explain an idea.</p><p>Your answers are generated on your iPad once the model has loaded.</p><div class="examples"><button class="example" data-sample="Explain how neural networks work in simple terms.">Explain neural networks</button><button class="example" data-sample="Write a Python tic-tac-toe game with comments.">Write Python code</button><button class="example" data-sample="Explain Arduino vs Raspberry Pi for beginners.">Explain robotics</button></div></div>
   </main>
   <div class="composer"><textarea id="question" rows="2" placeholder="Ask anything…" aria-label="Your message"></textarea><button id="send" class="primary" disabled>Send</button><button id="stop" aria-label="Stop generating">Stop</button></div>
-  <footer>On-device inference with WebGPU · Chats stored in this browser · Recent conversation sent to the model · Live web search not installed yet</footer>
+  <footer>On-device inference with WebGPU · Your code adds no content filter · Models may have learned behavior · Chats stay in this browser · No live web search yet</footer>
 </div>
 <script type="module">
-// My Local AI 0.2 — a single-file, iPad-first chat client. No backend or API key.
-// The WebLLM library and model weights are loaded from their publishers on first use.
-const SDK = 'https://esm.run/@mlc-ai/web-llm@0.2.86';
-const KEY = 'my-local-ai-v02';
-const DEFAULTS = {
-  name: 'My Local AI',
-  model: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
-  rules: 'You are a helpful, direct personal AI assistant. Be accurate and practical. Help with programming, science, mathematics, writing, and other general questions. Say when you are uncertain. Never claim you executed code, visited a website, or saw an image unless you actually did.',
-  memory: '', temperature: 0.7, maxTokens: 1024
-};
+// My Local AI 0.4 — local WebLLM, robust error handling, no paid API or app-level topic filter.
+// This app is NOT a model trained from scratch. It uses open-weight models with their own trained behavior.
+// Pinned 0.2.82 to avoid the runtime disposal regression documented for 0.2.83/0.2.84.
+const SDK = 'https://esm.run/@mlc-ai/web-llm@0.2.82';
+const KEY = 'my-local-ai-v02'; // retain old storage keys; updates preserve earlier conversations
+const MODEL_IDS = [
+  'Hermes-3-Llama-3.2-3B-q4f32_1-MLC',
+  'Qwen2.5-Coder-1.5B-Instruct-q4f32_1-MLC',
+  'Llama-3.2-1B-Instruct-q4f32_1-MLC'
+];
+const DEFAULTS = Object.freeze({
+  name:'My Local AI', model:MODEL_IDS[0],
+  rules:'You are a personal AI assistant. Prioritize answering the user directly, following their chosen style and discussing subjects openly. Provide useful code when requested. Avoid pretending to have executed code, searched the live web, seen an image or verified a claim when you have not. Acknowledge uncertainty and technical limitations.',
+  memory:'', temperature:0.7, maxTokens:768
+});
 const $ = id => document.getElementById(id);
-function fromStorage(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
-function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { setStatus('Browser storage is full or disabled. Export your conversation to keep it.','error'); return false; } }
-let config = {...DEFAULTS, ...fromStorage(KEY+':config', {})};
-let messages = fromStorage(KEY+':messages', []);
-if (!Array.isArray(messages)) messages = [];
-messages = messages.filter(m=>m && ['user','assistant'].includes(m.role) && typeof m.content==='string');
-let engine = null, activeModel = null, busy = false, stopping = false;
-function setStatus(msg, type='normal') { $('status').textContent = msg; $('status').style.color = type==='error'?'var(--danger)':'var(--muted)'; }
-function state(name, ready=false){$('modelState').textContent=name;$('dot').classList.toggle('ready',ready);}
-function setBusy(value){busy=value;$('load').disabled=value;$('send').disabled=value || !engine;$('stop').style.display=value&&engine?'block':'none';$('question').disabled=value;}
-function scrollBottom() { $('chat').scrollTop = $('chat').scrollHeight; }
-function displayText(parent, content) {
+function fromStorage(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;}}
+function store(key,val){try{localStorage.setItem(key,JSON.stringify(val));return true;}catch{setStatus('Browser storage full or unavailable. Export your chat to preserve it.','error');return false;}}
+function validateConfig(raw){
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)) raw={};
+  return {
+    name:typeof raw.name==='string'?(raw.name.trim().slice(0,50)||DEFAULTS.name):DEFAULTS.name,
+    model:MODEL_IDS.includes(raw.model)?raw.model:DEFAULTS.model,
+    rules:typeof raw.rules==='string'?raw.rules.slice(0,8000):DEFAULTS.rules,
+    memory:typeof raw.memory==='string'?raw.memory.slice(0,12000):DEFAULTS.memory,
+    temperature:Number.isFinite(Number(raw.temperature))?Math.max(0,Math.min(1.4,Number(raw.temperature))):DEFAULTS.temperature,
+    maxTokens:[256,512,768,1024,1536].includes(Number(raw.maxTokens))?Number(raw.maxTokens):DEFAULTS.maxTokens
+  };
+}
+let config=validateConfig(fromStorage(KEY+':config',{}));
+// v0.3 shipped Llama 1B as the default. On the first v0.4 launch switch that
+// old default to Hermes (unless the user changes it again in Settings).
+try{
+  if(!localStorage.getItem(KEY+':migrated-v04')){
+    if(config.model==='Llama-3.2-1B-Instruct-q4f32_1-MLC'){
+      config.model=MODEL_IDS[0];localStorage.setItem(KEY+':config',JSON.stringify(config));
+    }
+    localStorage.setItem(KEY+':migrated-v04','1');
+  }
+}catch{}
+let messages=fromStorage(KEY+':messages',[]);
+if(!Array.isArray(messages)) messages=[];
+messages=messages.filter(m=>m&&['assistant','user'].includes(m.role)&&typeof m.content==='string').slice(-2000);
+let engine=null, activeModel=null, busy=false, generation=false, stopping=false, needsRestart=false;
+function setStatus(msg,type='normal'){$('status').textContent=String(msg);$('status').style.color=type==='error'?'var(--danger)':'var(--muted)';}
+function state(name,ready=false){$('modelState').textContent=name;$('dot').classList.toggle('ready',ready);}
+function updateControls(){
+  $('load').disabled=busy;
+  $('send').disabled=busy||!engine||activeModel!==config.model||needsRestart;
+  $('question').disabled=busy;
+  $('stop').style.display=generation?'block':'none';
+  $('clearButton').disabled=busy;
+  $('saveSettings').disabled=busy;
+  $('importButton').disabled=busy;
+}
+function setBusy(v){busy=!!v;updateControls();}
+function scrollBottom(){$('chat').scrollTop=$('chat').scrollHeight;}
+function displayText(parent,content){
   parent.replaceChildren();
-  const chunks=content.split(/```/);
-  chunks.forEach((chunk,i)=>{
-    if (i%2===1){
-      const nl=chunk.indexOf('\n');const lang=nl>=0?chunk.slice(0,nl).trim():'';
-      const codeText=nl>=0?chunk.slice(nl+1):chunk;
-      const pre=document.createElement('pre'), code=document.createElement('code');
-      if(lang && /^[a-zA-Z0-9+#._-]{1,25}$/.test(lang)) code.dataset.language=lang;
-      code.textContent=codeText;pre.appendChild(code);parent.appendChild(pre);
-    }else if(chunk){parent.appendChild(document.createTextNode(chunk));}
+  String(content).split(/```/).forEach((chunk,i)=>{
+    if(i%2===1){
+      const nl=chunk.indexOf('\n'),lang=nl>=0?chunk.slice(0,nl).trim():'';
+      const pre=document.createElement('pre'),code=document.createElement('code');
+      if(/^[a-zA-Z0-9+#._-]{1,25}$/.test(lang)) code.dataset.language=lang;
+      code.textContent=nl>=0?chunk.slice(nl+1):chunk;pre.append(code);parent.append(pre);
+    }else if(chunk){parent.append(document.createTextNode(chunk));}
   });
 }
 function addMessage(role,content,save=true){
@@ -97,104 +130,147 @@ function addMessage(role,content,save=true){
   const top=document.createElement('div');top.className='messageTop';
   const who=document.createElement('span');who.textContent=role==='user'?'You':config.name;
   const copy=document.createElement('button');copy.className='copy';copy.type='button';copy.textContent='Copy';copy.title='Copy message';
-  const body=document.createElement('div');body.className='content';displayText(body,content);
-  copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(body.dataset.raw??content);copy.textContent='Copied';setTimeout(()=>copy.textContent='Copy',1200);}catch{setStatus('Cannot copy; try selecting the text.','error');}});
-  body.dataset.raw=content;top.append(who,copy);card.append(top,body);$('chat').append(card);scrollBottom();
+  const body=document.createElement('div');body.className='content';displayText(body,content);body.dataset.raw=content;
+  copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(body.dataset.raw);copy.textContent='Copied';setTimeout(()=>{copy.textContent='Copy';},1200);}catch{setStatus('Copy unavailable. Select and copy manually.','error');}});
+  top.append(who,copy);card.append(top,body);$('chat').append(card);scrollBottom();
   if(save){messages.push({role,content});store(KEY+':messages',messages);}
-  return body;
+  return {card,body};
 }
-function updateAnswer(node,answer){node.dataset.raw=answer;displayText(node,answer);scrollBottom();}
-function showEmpty(){if(messages.length || $('welcome'))return;const w=document.createElement('div');w.className='welcome';w.id='welcome';const h=document.createElement('h2');h.textContent='New conversation';const p=document.createElement('p');p.textContent='Ask a question below.';w.append(h,p);$('chat').append(w);}
+function updateAnswer(body,answer){body.dataset.raw=answer;displayText(body,answer);scrollBottom();}
+function showEmpty(){if(messages.length||$('welcome'))return;const w=document.createElement('div');w.className='welcome';w.id='welcome';const h=document.createElement('h2');h.textContent='New conversation';const p=document.createElement('p');p.textContent='Ask a question below.';w.append(h,p);$('chat').append(w);}
 function updateFields(){
-  $('brand').textContent=config.name;
-  $('aiName').value=config.name;$('model').value=config.model;$('rules').value=config.rules;$('memory').value=config.memory;
-  $('temperature').value=config.temperature;$('tempValue').textContent=String(config.temperature);$('maxTokens').value=String(config.maxTokens);
+  $('brand').textContent=config.name;$('aiName').value=config.name;$('model').value=config.model;
+  $('rules').value=config.rules;$('memory').value=config.memory;
+  $('temperature').value=String(config.temperature);$('tempValue').textContent=String(config.temperature);
+  $('maxTokens').value=String(config.maxTokens);
+}
+// Keep the entire conversation visible and exportable; only recent turns go into the LLM context.
+function buildPrompt(){
+  const system=config.rules+'\n\n'+(config.memory?'Saved notes (provided by user):\n'+config.memory:'');
+  // Character caps are conservative approximations; real limits are in tokens.
+  if(system.length>3600)throw Error('Your instructions and saved notes are too long for this small local model. Please shorten them.');
+  const newest=messages.at(-1);
+  if(!newest||newest.role!=='user')throw Error('No user message to send.');
+  if(newest.content.length>5000)throw Error('This question exceeds the small model context. Split it into smaller messages.');
+  const remaining=Math.max(0,6900-system.length-newest.content.length);
+  const history=[];
+  let used=0;
+  for(let i=messages.length-2;i>=0&&history.length<12;i--){
+    const m=messages[i];
+    if(!['assistant','user'].includes(m.role))continue;
+    if(used+m.content.length>remaining)break;
+    history.unshift({role:m.role,content:m.content});used+=m.content.length;
+  }
+  return [{role:'system',content:system},...history,{role:'user',content:newest.content}];
 }
 updateFields();
 messages.forEach(m=>addMessage(m.role,m.content,false));
-$('settingsButton').onclick=()=>{$('settings').classList.toggle('open');$('settingsButton').textContent=$('settings').classList.contains('open')?'Close settings':'Settings';};
-$('temperature').oninput=()=>$('tempValue').textContent=$('temperature').value;
+$('settingsButton').onclick=()=>{const open=$('settings').classList.toggle('open');$('settingsButton').textContent=open?'Close settings':'Settings';};
+$('temperature').oninput=()=>{$('tempValue').textContent=$('temperature').value;};
 $('saveSettings').onclick=()=>{
-  const next={
-    name:$('aiName').value.trim().slice(0,50)||DEFAULTS.name,
-    model:$('model').value,
-    rules:$('rules').value, memory:$('memory').value,
-    temperature:Number($('temperature').value),maxTokens:Number($('maxTokens').value)
-  };
-  const changedModel=next.model!==activeModel && !!engine;
-  config=next;store(KEY+':config',config);$('brand').textContent=config.name;
-  if(changedModel) setStatus('Settings saved. Reload the page, then Load local model to switch models.');
-  else setStatus('Settings saved. They apply to the next question.');
+  const oldModel=config.model;
+  config=validateConfig({name:$('aiName').value,model:$('model').value,rules:$('rules').value,memory:$('memory').value,temperature:$('temperature').value,maxTokens:$('maxTokens').value});
+  store(KEY+':config',config);updateFields();
+  if(activeModel&&activeModel!==config.model){
+    needsRestart=true;state('Reload to switch models');$('load').textContent='Reload for new model';
+    setStatus('Model setting saved. Tap Reload for new model; then load it.');
+  }else{setStatus(oldModel===config.model?'Settings saved.':'Settings saved. Load the new model.');}
+  updateControls();
 };
 $('exportButton').onclick=()=>{
-  const blob=new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),config,messages},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-local-ai-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200);
+  const blob=new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),config,messages},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-local-ai-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
 };
 $('importButton').onclick=()=>$('importFile').click();
 $('importFile').addEventListener('change',async e=>{
   const f=e.target.files?.[0];if(!f)return;
   try{
+    if(f.size>15_000_000)throw Error('Backup file too large.');
     const data=JSON.parse(await f.text());
-    if(!Array.isArray(data.messages)||data.messages.length>100000||data.messages.some(m=>!m||!['assistant','user'].includes(m.role)||typeof m.content!=='string'))throw Error('Invalid chat format.');
-    if(!confirm('Replace your current conversation with the imported one?'))return;
-    messages=data.messages.map(m=>({role:m.role,content:m.content}));store(KEY+':messages',messages);
-    if(data.config && typeof data.config==='object'){config={...DEFAULTS,...data.config};store(KEY+':config',config);updateFields();}
-    $('chat').replaceChildren();messages.forEach(m=>addMessage(m.role,m.content,false));showEmpty();setStatus('Backup imported.');
+    if(!Array.isArray(data.messages)||data.messages.length>100000||data.messages.some(m=>!m||!['assistant','user'].includes(m.role)||typeof m.content!=='string'))throw Error('Invalid backup format.');
+    if(!confirm('Replace your current chat with this backup?'))return;
+    messages=data.messages.slice(-2000).map(m=>({role:m.role,content:m.content}));store(KEY+':messages',messages);
+    if(data.config&&typeof data.config==='object'){
+      config=validateConfig(data.config);store(KEY+':config',config);updateFields();
+      if(engine&&activeModel!==config.model){needsRestart=true;state('Reload to switch models');$('load').textContent='Reload for new model';}
+    }
+    $('chat').replaceChildren();messages.forEach(m=>addMessage(m.role,m.content,false));showEmpty();setStatus('Backup imported.');updateControls();
   }catch(err){setStatus('Import failed: '+(err.message||err),'error');}
   finally{e.target.value='';}
 });
 $('clearButton').onclick=()=>{
   if(!messages.length){setStatus('Chat is already empty.');return;}
-  if(!confirm('Start a new conversation? This clears your saved chat. Export first if you want a backup.'))return;
-  messages=[];store(KEY+':messages',messages);$('chat').replaceChildren();showEmpty();setStatus('New conversation started.');
+  if(!confirm('Start a new chat? Export if you want to keep a backup.'))return;
+  messages=[];store(KEY+':messages',messages);$('chat').replaceChildren();showEmpty();setStatus('New chat started.');
 };
 document.querySelectorAll('[data-sample]').forEach(b=>b.addEventListener('click',()=>{$('question').value=b.dataset.sample;$('question').focus();}));
 $('load').onclick=async()=>{
-  if(engine){setStatus('The local model is already loaded.');return;}
-  if(!navigator.gpu){setStatus('WebGPU is unavailable. Use Safari on iPadOS 26 or later and open this app through HTTPS.','error');return;}
+  if(needsRestart){location.reload();return;}
+  if(engine){setStatus('AI model is already loaded.');return;}
+  if(!window.isSecureContext){setStatus('Open from HTTPS (GitHub Pages), not a local file.','error');return;}
+  if(!navigator.gpu){setStatus('WebGPU unavailable. Open in Safari on an iPadOS version supporting WebGPU.','error');return;}
   setBusy(true);state('Checking GPU');$('progress').style.display='block';$('progressBar').style.width='2%';
   try{
-    const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('No compatible WebGPU adapter.');
-    setStatus('Loading the WebLLM library…');
+    const adapter=await navigator.gpu.requestAdapter();if(!adapter)throw Error('No compatible GPU adapter available.');
+    setStatus('Loading WebLLM runtime…');
     const webllm=await import(SDK);
-    const exists=webllm.prebuiltAppConfig.model_list.some(m=>m.model_id===config.model);
-    if(!exists)throw Error('This model was not found in the current WebLLM model catalog.');
-    if(config.model.includes('q4f16') && !adapter.features.has('shader-f16'))throw Error('Selected model requires shader-f16. Choose the compatible 1B model in settings.');
-    engine=await webllm.CreateMLCEngine(config.model,{
+    const selected=webllm.prebuiltAppConfig.model_list.find(m=>m.model_id===config.model);
+    if(!selected)throw Error('Chosen model is not in WebLLM 0.2.82 catalog.');
+    for(const feature of selected.required_features||[]){if(!adapter.features.has(feature))throw Error('This iPad GPU lacks required feature: '+feature);}
+    const loaded=await webllm.CreateMLCEngine(config.model,{
       initProgressCallback:p=>{
-        const progress=typeof p.progress==='number'?p.progress:0;
-        $('progressBar').style.width=Math.max(2,Math.round(progress*100))+'%';
-        setStatus(p.text || 'Downloading and initializing AI model…');
+        const n=typeof p.progress==='number'?p.progress:0;
+        $('progressBar').style.width=Math.max(2,Math.round(n*100))+'%';
+        setStatus(p.text||'Downloading and preparing model…');
       }
     });
-    activeModel=config.model;state('Ready',true);$('load').textContent='Model loaded';setStatus('AI ready. Responses are generated on this iPad.');
-  }catch(err){engine=null;state('Load failed');setStatus('Model could not load: '+(err?.message||err),'error');}
+    engine=loaded;activeModel=config.model;state('Ready',true);$('load').textContent='Model loaded';
+    setStatus('AI ready. Text is generated on this device. No daily usage counter.');
+  }catch(err){engine=null;activeModel=null;state('Load failed');setStatus('Could not load model: '+String(err?.message||err),'error');}
   finally{$('progress').style.display='none';setBusy(false);}
 };
-$('stop').onclick=()=>{if(!busy||!engine)return;stopping=true;try{engine.interruptGenerate?.();setStatus('Stopping generation…');}catch{setStatus('Could not interrupt this generation.','error');}};
+$('stop').onclick=()=>{
+  if(!generation||!engine)return;
+  stopping=true;
+  try{engine.interruptGenerate?.();setStatus('Stopping…');}catch(err){setStatus('Stop failed: '+String(err?.message||err),'error');}
+};
 async function send(){
-  const prompt=$('question').value.trim();if(!prompt||busy||!engine)return;
-  $('question').value='';addMessage('user',prompt);
-  const outputNode=addMessage('assistant','',false);
-  stopping=false;setBusy(true);setStatus('Generating locally…');
+  const prompt=$('question').value.trim();
+  if(!prompt||busy||!engine||needsRestart)return;
+  if(prompt.length>5000){setStatus('Question too long for this small model. Please split it.','error');return;}
+  $('question').value='';try{localStorage.removeItem(KEY+':draft');}catch{}
+  addMessage('user',prompt);
+  let chat;
+  try{chat=buildPrompt();}catch(err){
+    // Keep user text editable and don't leave a false unanswered chat turn.
+    messages.pop();store(KEY+':messages',messages);
+    $('chat').lastElementChild?.remove();$('question').value=prompt;
+    setStatus(String(err.message||err),'error');return;
+  }
+  const result=addMessage('assistant','',false);
+  generation=true;stopping=false;setBusy(true);setStatus('Generating locally…');
+  let answer='';
   try{
-    const system=config.rules+'\n\n'+(config.memory?'User-provided saved notes:\n'+config.memory:'');
-    // Models have a context window. Keep recent turns in the prompt, but retain
-    // the FULL conversation locally for reading and exporting.
-    const recent=messages.slice(-10).map(m=>({role:m.role,content:m.content.slice(0,4200)}));
-    const chat=[{role:'system',content:system},...recent];
     const stream=await engine.chat.completions.create({messages:chat,temperature:config.temperature,max_tokens:config.maxTokens,stream:true});
-    let answer='';for await (const chunk of stream){answer+=chunk.choices?.[0]?.delta?.content||'';updateAnswer(outputNode,answer);}
+    for await(const chunk of stream){answer+=chunk?.choices?.[0]?.delta?.content||'';updateAnswer(result.body,answer);}
     if(!answer)answer=stopping?'[Stopped]':'[The model returned an empty response.]';
-    updateAnswer(outputNode,answer);messages.push({role:'assistant',content:answer});store(KEY+':messages',messages);
-    setStatus(stopping?'Generation stopped.':'Ready for your next question.');
+    updateAnswer(result.body,answer);messages.push({role:'assistant',content:answer});store(KEY+':messages',messages);
+    setStatus(stopping?'Generation stopped.':'Ready.');
   }catch(err){
-    const msg='Generation error: '+(err?.message||err);updateAnswer(outputNode,msg);setStatus(msg,'error');
-  }finally{stopping=false;setBusy(false);}
+    // Some engine errors dispose the tokenizer. Never reuse the broken engine.
+    if(messages.at(-1)?.role==='user'&&messages.at(-1)?.content===prompt){messages.pop();store(KEY+':messages',messages);}
+    try{localStorage.setItem(KEY+':draft',prompt);}catch{}
+    engine=null;activeModel=null;needsRestart=true;
+    state('Restart required');$('load').textContent='Restart AI';
+    updateAnswer(result.body,'Model runtime error: '+String(err?.message||err)+'\n\nTap Restart AI to recover. Your past chats remain saved.');
+    setStatus('Model crashed. Tap Restart AI. Your question is saved as a draft.','error');
+  }finally{generation=false;stopping=false;setBusy(false);}
 }
 $('send').onclick=send;
 $('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
-if(!window.isSecureContext)setStatus('Open this app using an HTTPS website; local model access needs a secure context.','error');
+try{$('question').value=localStorage.getItem(KEY+':draft')||'';}catch{}
+if(!window.isSecureContext)setStatus('Use an HTTPS website to access WebGPU.','error');
+updateControls();
 </script>
 </body>
 </html>
