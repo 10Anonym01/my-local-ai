@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
 <meta name="description" content="Your private AI assistant running on your device. No account, paid API, or daily chat quota.">
-<title>My Local AI · v0.6</title>
+<title>My Local AI · v0.7</title>
 <style>
   :root{color-scheme:dark;--bg:#090e1a;--panel:#121b2c;--panel2:#17243a;--border:#30405b;--text:#edf4ff;--muted:#9fb1cc;--accent:#9eb9ff;--mint:#79dfc0;--danger:#f6a4a4}
   *{box-sizing:border-box}html,body{margin:0;height:100%;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
@@ -24,7 +24,7 @@
 <div class="app">
   <header>
     <div class="symbol" aria-hidden="true">✦</div>
-    <div><h1 id="brand">My Local AI</h1><div class="sub">Your device · Your instructions · No daily chat quota · v0.6</div></div>
+    <div><h1 id="brand">My Local AI</h1><div class="sub">Your device · Your instructions · No daily chat quota · v0.7</div></div>
     <div class="state"><span class="statusDot" id="dot"></span><span id="modelState">Not loaded</span></div>
   </header>
   <div class="toolbar">
@@ -57,11 +57,11 @@
   <footer>On-device CPU inference (WebAssembly) · No added topic filter · Models have learned behavior · Chats stay in this browser · No live web search yet</footer>
 </div>
 <script type="module">
-// My Local AI 0.6 — on-device llama.cpp / WebAssembly via wllama, avoiding WebLLM's tokenizer path.
+// My Local AI 0.7 — on-device llama.cpp / WebAssembly via wllama, avoiding WebLLM's tokenizer path.
 // Single page, with the same private-chat storage key as v0.2-v0.5.
 // Models remain pretrained; we add no application-level topic filter or daily question counter.
 const SDK = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js';
-const WASM_CDN = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/wasm-from-cdn.js';
+const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/';
 const KEY = 'my-local-ai-v02';
 const MODELS = Object.freeze({
   'qwen3-tiny': {repo:'QuantFactory/Qwen3-0.6B-GGUF', file:'Qwen3-0.6B.Q4_K_M.gguf',name:'Qwen3 0.6B',mb:484},
@@ -208,10 +208,12 @@ async function loadModel(){
  $('progress').style.display='block';$('progressBar').style.width='2%';
  let w=null;
  try{
-   const [api,wasm]=await Promise.all([import(SDK),import(WASM_CDN)]);
+   const api=await import(SDK);
    // CPU-only: we deliberately avoid WebGPU and WebLLM tokenizer lifecycle bugs.
-   w=new api.Wllama(wasm.default);
-   w.setCompat('default'); // Safari / iPad compatibility WASM is downloaded automatically.
+   w=new api.Wllama({
+     'single-thread/wllama.wasm': WASM_BASE+'single-thread/wllama.wasm',
+     'multi-thread/wllama.wasm': WASM_BASE+'multi-thread/wllama.wasm'
+   });
    const model=MODELS[config.model];
    if(!model)throw Error('Unknown model selected.');
    setStatus('Downloading or opening '+model.name+' ('+model.mb+' MB). Please keep Safari open…');
