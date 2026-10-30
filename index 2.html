@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="Your private AI assistant running on your device. No account, paid API, or daily chat quota.">
+<title>My Local AI · v0.7</title>
+<style>
+  :root{color-scheme:dark;--bg:#090e1a;--panel:#121b2c;--panel2:#17243a;--border:#30405b;--text:#edf4ff;--muted:#9fb1cc;--accent:#9eb9ff;--mint:#79dfc0;--danger:#f6a4a4}
+  *{box-sizing:border-box}html,body{margin:0;height:100%;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+  button,input,textarea,select{font:inherit}button{border:1px solid var(--border);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:11px;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}button.primary{background:var(--accent);color:#10182a;border-color:var(--accent);font-weight:750}button.minimal{background:transparent}button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .app{max-width:1080px;margin:auto;min-height:100dvh;height:100dvh;display:flex;flex-direction:column;padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px,env(safe-area-inset-left))}
+  header{display:flex;align-items:center;gap:12px;padding:14px 5px 13px;border-bottom:1px solid var(--border)}.symbol{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:linear-gradient(140deg,#a6b7ff,#72e8c9);font-weight:900;font-size:24px;color:#0d1830}h1{font-size:20px;line-height:1.1;margin:0}.sub{font-size:12px;color:var(--muted);margin-top:5px}.statusDot{width:8px;height:8px;border-radius:50%;background:#9aabc7;display:inline-block;margin-right:5px}.statusDot.ready{background:var(--mint)}.state{margin-left:auto;background:var(--panel);border:1px solid var(--border);padding:6px 10px;border-radius:99px;font-size:12px;white-space:nowrap}
+  .toolbar{padding:12px 4px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.grow{flex:1;min-width:180px}.hint{font-size:12px;color:var(--muted);overflow-wrap:anywhere}.barTrack{height:4px;background:var(--panel2);overflow:hidden;border-radius:8px;display:none}.bar{height:100%;width:2%;background:var(--mint);transition:width 140ms}
+  .settings{display:none;margin:7px 2px 6px;background:var(--panel);border:1px solid var(--border);padding:16px;border-radius:16px;max-height:40dvh;overflow:auto}.settings.open{display:block}.settings h2{margin:0 0 8px;font-size:16px}.settingsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field.full{grid-column:1/-1}label{display:block;font-weight:700;font-size:12px;color:#c2d0e6;margin-bottom:5px}select,input[type=text],textarea{width:100%;background:#0d1524;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px}textarea{resize:vertical}#rules{min-height:92px}#memory{min-height:68px}small{color:var(--muted)}.settingsActions{margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chat{flex:1;min-height:80px;overflow-y:auto;overscroll-behavior:contain;padding:15px 4px;display:flex;flex-direction:column;gap:13px}.welcome{margin:auto;max-width:430px;text-align:center;color:var(--muted);padding:24px 10px}.welcome .star{font-size:38px;color:var(--mint)}.welcome h2{color:var(--text);font-size:25px;margin:8px 0}.welcome p{margin:8px 0}.examples{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:15px}.example{font-size:12px}
+  .message{position:relative;max-width:min(92%,850px);padding:12px 15px;background:var(--panel);border:1px solid var(--border);border-radius:16px;align-self:flex-start}.message.user{align-self:flex-end;background:#233456;border-color:#3e5275}.messageTop{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:11px;color:var(--mint);font-weight:750;letter-spacing:.5px;text-transform:uppercase}.message.user .messageTop{color:#c5d5ff}.copy{margin-left:auto;font-size:11px;border:0;background:transparent;color:var(--muted);padding:1px 4px}.content{white-space:pre-wrap;overflow-wrap:anywhere}.content pre{white-space:pre;overflow:auto;border-radius:9px;padding:11px;margin:10px 0;background:#080e1b;border:1px solid #27334d;font-size:12px}.content code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.composer{display:flex;align-items:flex-end;gap:8px;border-top:1px solid var(--border);padding:11px 4px 5px}#question{flex:1;min-height:52px;max-height:180px;resize:none}#send,#stop{min-height:51px}#stop{display:none}footer{font-size:11px;color:var(--muted);text-align:center;padding:3px 2px 10px}
+  @media (max-width:650px){.settingsGrid{grid-template-columns:1fr}.field.full{grid-column:auto}.settings{max-height:43dvh}.message{max-width:98%}.toolbar button{padding:8px 10px}.grow{min-width:100%}h1{font-size:18px}}
+  @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="symbol" aria-hidden="true">✦</div>
+    <div><h1 id="brand">My Local AI</h1><div class="sub">Your device · Your instructions · No daily chat quota · v0.7</div></div>
+    <div class="state"><span class="statusDot" id="dot"></span><span id="modelState">Not loaded</span></div>
+  </header>
+  <div class="toolbar">
+    <button id="load" class="primary">Start AI</button>
+    <button id="settingsButton">Settings</button>
+    <button id="exportButton">Export</button>
+    <button id="importButton">Import</button>
+    <button id="clearButton" class="minimal">New chat</button>
+    <input id="importFile" type="file" accept="application/json,.json" hidden>
+    <span class="grow hint" id="status" role="status" aria-live="polite">Internet needed for the first model download. No account or API key needed.</span>
+  </div>
+  <div id="progress" class="barTrack" aria-label="Model download progress"><div id="progressBar" class="bar"></div></div>
+  <section id="settings" class="settings" aria-label="AI settings">
+    <h2>Customize your assistant</h2>
+    <div class="settingsGrid">
+      <div class="field"><label for="aiName">Assistant name</label><input id="aiName" type="text" maxlength="50" placeholder="My Local AI"></div>
+      <div class="field"><label for="model">Local language model</label><select id="model"><option value="qwen3-tiny">Qwen3 · 0.6B · Startup test (fast, low memory)</option><option value="hermes-3">Hermes 3 · 3B · Stronger, much slower (1.9GB download)</option></select></div>
+      <div class="field full"><label for="rules">Your instructions</label><textarea id="rules" spellcheck="true"></textarea><small>You control these app instructions. Pretrained models may still have learned refusal behavior; no model can be guaranteed to answer every request.</small></div>
+      <div class="field full"><label for="memory">Your saved notes (included with each question)</label><textarea id="memory" spellcheck="true" placeholder="Optional facts, preferences, project details…"></textarea></div>
+      <div class="field"><label for="temperature">Creativity: <span id="tempValue">0.7</span></label><input type="range" id="temperature" min="0" max="1.4" step="0.1" value="0.7" style="width:100%"></div>
+      <div class="field"><label for="maxTokens">Maximum response length</label><select id="maxTokens"><option value="128">Brief · 128 tokens</option><option value="256" selected>Standard · 256 tokens</option><option value="384">Detailed · 384 tokens</option><option value="512">Long · 512 tokens</option><option value="768">Very long · 768 tokens (higher memory)</option></select></div>
+      <div class="field full"><label><input type="checkbox" id="autoStart" checked style="width:auto;vertical-align:middle;margin-right:7px">Automatically initialize the AI when the page opens</label><small>Model files are cached when Safari permits. The engine still restarts after a refresh.</small></div>
+    </div>
+    <div class="settingsActions"><button id="saveSettings" class="primary">Save settings</button><small>Model changes need one page refresh; the selected model then loads automatically. Other settings apply immediately.</small></div><p class="hint">About: This version uses wllama (llama.cpp / WebAssembly, CPU-only) instead of WebLLM. The small Qwen3 model is for proving that your iPad can answer questions reliably. Hermes 3B remains available in Settings and may be slow. GitHub Pages hosts the application code; generation is local after downloads.</p>
+  </section>
+  <main class="chat" id="chat" aria-live="polite">
+    <div id="welcome" class="welcome"><div class="star">✦</div><h2>Your AI, automatically ready.</h2><p>The CPU-based AI loads automatically. First startup downloads a GGUF model; it may take time. Ask questions after the Ready indicator appears.</p><p>Your answers are generated on your iPad CPU. First download needs internet; Safari may clear cached models.</p><div class="examples"><button class="example" data-sample="Explain how neural networks work in simple terms.">Explain neural networks</button><button class="example" data-sample="Write a Python tic-tac-toe game with comments.">Write Python code</button><button class="example" data-sample="Explain Arduino vs Raspberry Pi for beginners.">Explain robotics</button></div></div>
+  </main>
+  <div class="composer"><textarea id="question" rows="2" placeholder="Ask anything…" aria-label="Your message"></textarea><button id="send" class="primary" disabled>Send</button><button id="stop" aria-label="Stop generating">Stop</button></div>
+  <footer>On-device CPU inference (WebAssembly) · No added topic filter · Models have learned behavior · Chats stay in this browser · No live web search yet</footer>
+</div>
+<script type="module">
+// My Local AI 0.7 — on-device llama.cpp / WebAssembly via wllama, avoiding WebLLM's tokenizer path.
+// Single page, with the same private-chat storage key as v0.2-v0.5.
+// Models remain pretrained; we add no application-level topic filter or daily question counter.
+const SDK = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/index.js';
+const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@3.6.1/esm/';
+const KEY = 'my-local-ai-v02';
+const MODELS = Object.freeze({
+  'qwen3-tiny': {repo:'QuantFactory/Qwen3-0.6B-GGUF', file:'Qwen3-0.6B.Q4_K_M.gguf',name:'Qwen3 0.6B',mb:484},
+  'hermes-3': {repo:'bartowski/Hermes-3-Llama-3.2-3B-GGUF',file:'Hermes-3-Llama-3.2-3B-Q4_K_S.gguf',name:'Hermes 3 3B',mb:1930}
+});
+const MODEL_IDS = Object.keys(MODELS);
+const DEFAULTS = Object.freeze({
+ name:'My Local AI', model:'qwen3-tiny',
+ rules:'You are a personal AI assistant. Answer directly and follow user-selected preferences. Generate code when requested. Do not claim to have accessed the live web, executed code or analyzed photos unless tools actually did so. Be accurate about uncertainty.',
+ memory:'',temperature:0.7,maxTokens:256,autoStart:true
+});
+const $ = id => document.getElementById(id);
+function fromStorage(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback;}catch{return fallback;}}
+function store(key,val){try{localStorage.setItem(key,JSON.stringify(val));return true;}catch{setStatus('Storage unavailable. Export your chat to preserve it.','error');return false;}}
+function validateConfig(raw){
+ if(!raw||typeof raw!=='object'||Array.isArray(raw)) raw={};
+ return {
+  name:typeof raw.name==='string'?(raw.name.trim().slice(0,50)||DEFAULTS.name):DEFAULTS.name,
+  // Old WebLLM model identifiers can't be used in this different engine.
+  model:MODEL_IDS.includes(raw.model)?raw.model:DEFAULTS.model,
+  rules:typeof raw.rules==='string'?raw.rules.slice(0,8000):DEFAULTS.rules,
+  memory:typeof raw.memory==='string'?raw.memory.slice(0,12000):DEFAULTS.memory,
+  temperature:Number.isFinite(Number(raw.temperature))?Math.max(0,Math.min(1.4,Number(raw.temperature))):DEFAULTS.temperature,
+  maxTokens:[128,256,384,512,768].includes(Number(raw.maxTokens))?Number(raw.maxTokens):DEFAULTS.maxTokens,
+  autoStart:typeof raw.autoStart==='boolean'?raw.autoStart:DEFAULTS.autoStart
+ };
+}
+let config=validateConfig(fromStorage(KEY+':config',{}));
+store(KEY+':config',config);
+let messages=fromStorage(KEY+':messages',[]);
+if(!Array.isArray(messages)) messages=[];
+messages=messages.filter(m=>m&&['assistant','user'].includes(m.role)&&typeof m.content==='string').slice(-2000);
+let engine=null, activeModel=null, busy=false, generation=false, stopping=false, needsRestart=false;
+function setStatus(msg,type='normal'){$('status').textContent=String(msg);$('status').style.color=type==='error'?'var(--danger)':'var(--muted)';}
+function state(name,ready=false){$('modelState').textContent=name;$('dot').classList.toggle('ready',ready);}
+function updateControls(){
+  $('load').disabled=busy;
+  $('send').disabled=busy||!engine||activeModel!==config.model||needsRestart;
+  $('question').disabled=busy;
+  $('stop').style.display=generation?'block':'none';
+  $('clearButton').disabled=busy;
+  $('saveSettings').disabled=busy;
+  $('importButton').disabled=busy;
+}
+function setBusy(v){busy=!!v;updateControls();}
+function scrollBottom(){$('chat').scrollTop=$('chat').scrollHeight;}
+function displayText(parent,content){
+  parent.replaceChildren();
+  String(content).split(/```/).forEach((chunk,i)=>{
+    if(i%2===1){
+      const nl=chunk.indexOf('\n'),lang=nl>=0?chunk.slice(0,nl).trim():'';
+      const pre=document.createElement('pre'),code=document.createElement('code');
+      if(/^[a-zA-Z0-9+#._-]{1,25}$/.test(lang)) code.dataset.language=lang;
+      code.textContent=nl>=0?chunk.slice(nl+1):chunk;pre.append(code);parent.append(pre);
+    }else if(chunk){parent.append(document.createTextNode(chunk));}
+  });
+}
+function addMessage(role,content,save=true){
+  $('welcome')?.remove();
+  const card=document.createElement('article');card.className='message '+(role==='user'?'user':'assistant');
+  const top=document.createElement('div');top.className='messageTop';
+  const who=document.createElement('span');who.textContent=role==='user'?'You':config.name;
+  const copy=document.createElement('button');copy.className='copy';copy.type='button';copy.textContent='Copy';copy.title='Copy message';
+  const body=document.createElement('div');body.className='content';displayText(body,content);body.dataset.raw=content;
+  copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(body.dataset.raw);copy.textContent='Copied';setTimeout(()=>{copy.textContent='Copy';},1200);}catch{setStatus('Copy unavailable. Select and copy manually.','error');}});
+  top.append(who,copy);card.append(top,body);$('chat').append(card);scrollBottom();
+  if(save){messages.push({role,content});store(KEY+':messages',messages);}
+  return {card,body};
+}
+function updateAnswer(body,answer){body.dataset.raw=answer;displayText(body,answer);scrollBottom();}
+function showEmpty(){if(messages.length||$('welcome'))return;const w=document.createElement('div');w.className='welcome';w.id='welcome';const h=document.createElement('h2');h.textContent='New conversation';const p=document.createElement('p');p.textContent='Ask a question below.';w.append(h,p);$('chat').append(w);}
+function updateFields(){
+  $('brand').textContent=config.name;$('aiName').value=config.name;$('model').value=config.model;
+  $('rules').value=config.rules;$('memory').value=config.memory;
+  $('temperature').value=String(config.temperature);$('tempValue').textContent=String(config.temperature);
+  $('maxTokens').value=String(config.maxTokens);$('autoStart').checked=config.autoStart;
+}
+// Keep the entire conversation visible and exportable; only recent turns go into the LLM context.
+function buildPrompt(){
+  const system=config.rules+'\n\n'+(config.memory?'Saved notes (provided by user):\n'+config.memory:'');
+  // Character caps are conservative approximations; real limits are in tokens.
+  if(system.length>1800)throw Error('Instructions and saved notes exceed the local model context. Shorten them.');
+  const newest=messages.at(-1);
+  if(!newest||newest.role!=='user')throw Error('No user message to send.');
+  if(newest.content.length>2000)throw Error('Question too long for the current 2048-token context. Split it.');
+  const remaining=Math.max(0,3200-system.length-newest.content.length);
+  const history=[];
+  let used=0;
+  for(let i=messages.length-2;i>=0&&history.length<6;i--){
+    const m=messages[i];
+    if(!['assistant','user'].includes(m.role))continue;
+    if(used+m.content.length>remaining)break;
+    history.unshift({role:m.role,content:m.content});used+=m.content.length;
+  }
+  return [{role:'system',content:system},...history,{role:'user',content:newest.content}];
+}
+updateFields();
+messages.forEach(m=>addMessage(m.role,m.content,false));
+$('settingsButton').onclick=()=>{const open=$('settings').classList.toggle('open');$('settingsButton').textContent=open?'Close settings':'Settings';};
+$('temperature').oninput=()=>{$('tempValue').textContent=$('temperature').value;};
+$('saveSettings').onclick=()=>{
+  const oldModel=config.model;
+  config=validateConfig({name:$('aiName').value,model:$('model').value,rules:$('rules').value,memory:$('memory').value,temperature:$('temperature').value,maxTokens:$('maxTokens').value,autoStart:$('autoStart').checked});
+  store(KEY+':config',config);updateFields();
+  if(activeModel&&activeModel!==config.model){
+    needsRestart=true;state('Reload to switch models');$('load').textContent='Reload for new model';
+    setStatus('Model changed. Tap Reload; it will load automatically.');
+  }else{setStatus(oldModel===config.model?'Settings saved.':'Settings saved. Load the new model.');}
+  updateControls();
+};
+$('exportButton').onclick=()=>{
+  const blob=new Blob([JSON.stringify({version:5,exportedAt:new Date().toISOString(),config,messages},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-local-ai-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+};
+$('importButton').onclick=()=>$('importFile').click();
+$('importFile').addEventListener('change',async e=>{
+  const f=e.target.files?.[0];if(!f)return;
+  try{
+    if(f.size>15_000_000)throw Error('Backup file too large.');
+    const data=JSON.parse(await f.text());
+    if(!Array.isArray(data.messages)||data.messages.length>100000||data.messages.some(m=>!m||!['assistant','user'].includes(m.role)||typeof m.content!=='string'))throw Error('Invalid backup format.');
+    if(!confirm('Replace your current chat with this backup?'))return;
+    messages=data.messages.slice(-2000).map(m=>({role:m.role,content:m.content}));store(KEY+':messages',messages);
+    if(data.config&&typeof data.config==='object'){
+      config=validateConfig(data.config);store(KEY+':config',config);updateFields();
+      if(engine&&activeModel!==config.model){needsRestart=true;state('Reload to switch models');$('load').textContent='Reload for new model';}
+    }
+    $('chat').replaceChildren();messages.forEach(m=>addMessage(m.role,m.content,false));showEmpty();setStatus('Backup imported.');updateControls();
+  }catch(err){setStatus('Import failed: '+(err.message||err),'error');}
+  finally{e.target.value='';}
+});
+$('clearButton').onclick=()=>{
+  if(!messages.length){setStatus('Chat is already empty.');return;}
+  if(!confirm('Start a new chat? Export if you want to keep a backup.'))return;
+  messages=[];store(KEY+':messages',messages);$('chat').replaceChildren();showEmpty();setStatus('New chat started.');
+};
+document.querySelectorAll('[data-sample]').forEach(b=>b.addEventListener('click',()=>{$('question').value=b.dataset.sample;$('question').focus();}));
+let initAttempt=0,abortController=null;
+async function loadModel(){
+ if(busy||engine)return;
+ if(!window.isSecureContext){state('HTTPS required');setStatus('Open your HTTPS GitHub Pages website.','error');return;}
+ const attempt=++initAttempt;
+ setBusy(true);state('Starting…');$('load').textContent='Loading model…';
+ $('progress').style.display='block';$('progressBar').style.width='2%';
+ let w=null;
+ try{
+   const api=await import(SDK);
+   // CPU-only: we deliberately avoid WebGPU and WebLLM tokenizer lifecycle bugs.
+   w=new api.Wllama({
+     'single-thread/wllama.wasm': WASM_BASE+'single-thread/wllama.wasm',
+     'multi-thread/wllama.wasm': WASM_BASE+'multi-thread/wllama.wasm'
+   });
+   const model=MODELS[config.model];
+   if(!model)throw Error('Unknown model selected.');
+   setStatus('Downloading or opening '+model.name+' ('+model.mb+' MB). Please keep Safari open…');
+   await w.loadModelFromHF({repo:model.repo,file:model.file},{
+     n_gpu_layers:0,n_ctx:2048,n_threads:1,
+     progressCallback:({loaded,total})=>{
+       if(attempt!==initAttempt)return;
+       if(total>0){$('progressBar').style.width=Math.max(2,Math.min(99,Math.round(loaded/total*100)))+'%';
+       setStatus('Model download: '+Math.round(loaded/total*100)+'%. Keep Safari open.');}
+     }
+   });
+   engine=w;activeModel=config.model;needsRestart=false;
+   state('Ready',true);$('load').textContent='AI ready';
+   setStatus('Ready · '+model.name+' · CPU only · No daily message quota.');
+ }catch(err){
+   if(w){try{await w.exit();}catch{}}
+   engine=null;activeModel=null;state('Load failed');$('load').textContent='Retry loading';
+   setStatus('Could not start the model: '+String(err?.message||err)+'. Try the smaller model in Settings.','error');
+ }finally{$('progress').style.display='none';setBusy(false);}
+}
+$('load').onclick=()=>{
+ if(needsRestart){location.reload();return;}
+ if(engine){setStatus('AI is already ready.');return;}
+ loadModel();
+};
+$('stop').onclick=()=>{
+ if(!generation)return;
+ stopping=true;
+ abortController?.abort();
+ setStatus('Stopping current answer…');
+};
+async function send(){
+ const prompt=$('question').value.trim();
+ if(!prompt||busy||!engine||needsRestart)return;
+ if(prompt.length>2000){setStatus('Question too long. Split it into smaller questions.','error');return;}
+ $('question').value='';try{localStorage.removeItem(KEY+':draft');}catch{}
+ addMessage('user',prompt);
+ let chat;
+ try{chat=buildPrompt();}catch(err){
+   messages.pop();store(KEY+':messages',messages);
+   $('chat').lastElementChild?.remove();$('question').value=prompt;
+   setStatus(String(err.message||err),'error');return;
+ }
+ const result=addMessage('assistant','',false);
+ generation=true;stopping=false;abortController=new AbortController();
+ setBusy(true);setStatus('Generating locally on your iPad CPU…');
+ let answer='';
+ try{
+   await engine.createChatCompletion({messages:chat,
+     temperature:config.temperature,max_tokens:config.maxTokens,
+     stream:true,abortSignal:abortController.signal,
+     onData:chunk=>{
+       const text=chunk?.choices?.[0]?.delta?.content||'';
+       if(text){answer+=text;updateAnswer(result.body,answer);}
+     }
+   });
+   if(!answer)answer=stopping?'[Stopped]':'[The model returned no text.]';
+   updateAnswer(result.body,answer);
+   messages.push({role:'assistant',content:answer});store(KEY+':messages',messages);
+   setStatus(stopping?'Stopped.':'Ready.');
+ }catch(err){
+   if(messages.at(-1)?.role==='user'&&messages.at(-1)?.content===prompt){messages.pop();store(KEY+':messages',messages);}
+   try{localStorage.setItem(KEY+':draft',prompt);}catch{}
+   $('question').value=prompt;
+   const detail=String(err?.message||err);
+   updateAnswer(result.body,'AI generation stopped or failed. Your question was restored.\n\nError: '+detail);
+   setStatus('Generation error: '+detail,'error');
+   // A failed inference may leave a damaged runtime; require a full reload, not unsafe reuse.
+   const old=engine;engine=null;activeModel=null;needsRestart=true;
+   state('Restart needed');$('load').textContent='Restart AI';
+   // Do not call exit during an active worker crash; unload on page refresh.
+ }finally{generation=false;stopping=false;abortController=null;setBusy(false);}
+}
+$('send').onclick=send;
+$('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
+try{$('question').value=localStorage.getItem(KEY+':draft')||'';}catch{}
+if(!window.isSecureContext)setStatus('Open your HTTPS GitHub Pages website.','error');
+updateControls();
+let autoBootDone=false;
+function autoBoot(){
+  if(autoBootDone||!config.autoStart||engine||busy||needsRestart)return;
+  if(document.visibilityState==='hidden')return;
+  autoBootDone=true;
+  loadModel();
+}
+document.addEventListener('visibilitychange',autoBoot);
+setTimeout(autoBoot,150);
+
+</script>
+</body>
+</html>
